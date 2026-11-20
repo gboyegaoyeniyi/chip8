@@ -1,5 +1,5 @@
 mod chip8;
 
 fn main() {
-    println!("Hello, world!");
+    let chip8 = chip8::Chip8::new();
 }
