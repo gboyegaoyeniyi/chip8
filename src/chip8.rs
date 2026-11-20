@@ -1,3 +1,4 @@
+use std::{fs, io, path::Path};
 
 pub struct Chip8 {
     memory: [u8; 4096],
@@ -14,7 +15,7 @@ pub struct Chip8 {
 }
 
 
-const START_ADDR: u16 = 0x200;
+const START_ADDR: usize = 0x200;
 
 
 impl Chip8 {
@@ -23,7 +24,7 @@ impl Chip8 {
             memory: [0; 4096],
             v: [0; 16],
             i: 0,
-            pc: START_ADDR,
+            pc: START_ADDR as u16,
             stack: [0; 16],
             sp: 0,
             delay_timer: 0,
@@ -34,5 +35,13 @@ impl Chip8 {
         };
         
         chip8
+    }
+
+
+    pub fn load_rom(&mut self, rom_path: impl AsRef<Path>) -> io::Result<()> {
+        let rom_data = fs::read(rom_path)?;
+        let end = START_ADDR + rom_data.len();
+        self.memory[START_ADDR..end].copy_from_slice(&rom_data);
+        Ok(())
     }
 }
