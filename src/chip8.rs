@@ -42,6 +42,7 @@ impl Chip8 {
         let rom_data = fs::read(rom_path)?;
         let end = START_ADDR + rom_data.len();
         self.memory[START_ADDR..end].copy_from_slice(&rom_data);
+        self.pc = START_ADDR as u16;
         Ok(())
     }
 }
