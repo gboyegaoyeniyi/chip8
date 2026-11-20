@@ -64,4 +64,20 @@ impl Chip8 {
         self.pc = START_ADDR as u16;
         Ok(())
     }
+
+    pub fn cycle(&mut self) {
+        let pc = self.pc as usize;
+        let opcode: u16 = ((self.memory[pc] as u16) << 8) | ((self.memory[pc + 1]) as u16);
+
+        self.pc += 2;
+
+        let nibbles = (
+            (opcode & 0xF000) >> 12,
+            (opcode & 0x0F00) >> 8,
+            (opcode & 0x00F0) >> 4,
+            (opcode & 0x000F),
+        );
+
+        
+    }
 }
