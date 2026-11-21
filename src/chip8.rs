@@ -53,7 +53,7 @@ impl Chip8 {
             opcode: 0,
         };
 
-        chip8.memory[FONT_START_ADDR..FONT_START_ADDR+FONT_SIZE].copy_from_slice(&FONTS);
+        chip8.memory[FONT_START_ADDR..FONT_START_ADDR + FONT_SIZE].copy_from_slice(&FONTS);
         chip8
     }
 
@@ -78,6 +78,71 @@ impl Chip8 {
             (opcode & 0x000F),
         );
 
-        
+        let nnn = opcode & 0x0FFF;
+        let nn = (opcode & 0x00FF) as u8;
+        let x = nibbles.1 as usize;
+        let y = nibbles.2 as usize;
+        let n = nibbles.3 as usize;
+
+        // Instruction execution
+
+        match nibbles {
+            // 00E0
+            (0x0, 0x0, 0xE, 0x0) => {
+                self.display.fill(false);
+            }
+
+            // 1NNN
+            (0x1, _, _, _) => {
+                self.pc = nnn;
+            }
+
+            // 6XNN
+            (0x6, _, _, _) => {
+                self.v[x] = nn;
+            }
+
+            // 7XNN
+            (0x7, _, _, _) => {
+                self.v[x] = self.v[x].wrapping_add(nn);
+            }
+
+            // ANNN
+            (0xA, _, _, _) => {
+                self.i = nnn;
+            }
+
+            // DXYN
+            (0xD, _, _, _) => {
+                let x_start = (self.memory[x] as usize) % 64;
+                let y_start = (self.memory[y] as usize) % 32;
+                self.v[0xF] = 0;
+
+                for row in 0..n {
+                    if y_start + row >= 32 {
+                        break;
+                    }
+
+                    let sprite_byte = self.memory[(self.i as usize) + row];
+
+                    for col in 0..8 {
+                        if x_start + col >= 64 {
+                            break;
+                        }
+
+                        if sprite_byte & (0x80 >> col) != 0 {
+                            let idx = (y_start + row) * 64 + (x_start + col);
+
+                            if self.display[idx] {
+                                self.v[0xF] = 1;
+                            }
+
+                            self.display[idx] ^= true;
+                        }
+                    }
+                }
+            }
+            _ => todo!("Unimplemented opcode: {}", opcode),
+        }
     }
 }
