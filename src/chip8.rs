@@ -9,7 +9,7 @@ pub struct Chip8 {
     sp: u8,
     delay_timer: u8,
     sound_timer: u8,
-    display: [bool; 64 * 32],
+    pub display: [bool; 64 * 32],
     keypad: [bool; 16],
     opcode: u16,
 }
@@ -114,8 +114,8 @@ impl Chip8 {
 
             // DXYN
             (0xD, _, _, _) => {
-                let x_start = (self.memory[x] as usize) % 64;
-                let y_start = (self.memory[y] as usize) % 32;
+                let x_start = (self.v[x] as usize) % 64;
+                let y_start = (self.v[y] as usize) % 32;
                 self.v[0xF] = 0;
 
                 for row in 0..n {
