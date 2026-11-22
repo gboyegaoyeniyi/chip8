@@ -87,32 +87,45 @@ impl Chip8 {
         // Instruction execution
 
         match nibbles {
-            // 00E0
+            // 00E0: Clear screen
             (0x0, 0x0, 0xE, 0x0) => {
                 self.display.fill(false);
             }
 
-            // 1NNN
+            // 1NNN: Jump
             (0x1, _, _, _) => {
                 self.pc = nnn;
             }
 
-            // 6XNN
+            // 2NNN: Cal subroutine at NNN
+            (0x2, _, _, _) => {
+                self.stack[self.sp as usize] = self.pc;
+                self.sp += 1;
+                self.pc = nnn;
+            } 
+            
+            // OOEE: Return from subroutine
+            (0x0, 0x0, 0xE, 0xE) => {
+                self.sp -= 1;
+                self.pc = self.stack[self.sp as usize];
+            }
+
+            // 6XNN: Set
             (0x6, _, _, _) => {
                 self.v[x] = nn;
             }
 
-            // 7XNN
+            // 7XNN: Add
             (0x7, _, _, _) => {
                 self.v[x] = self.v[x].wrapping_add(nn);
             }
 
-            // ANNN
+            // ANNN: Set index
             (0xA, _, _, _) => {
                 self.i = nnn;
             }
 
-            // DXYN
+            // DXYN: Display
             (0xD, _, _, _) => {
                 let x_start = (self.v[x] as usize) % 64;
                 let y_start = (self.v[y] as usize) % 32;
