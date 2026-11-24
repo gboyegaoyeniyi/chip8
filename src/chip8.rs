@@ -11,7 +11,6 @@ pub struct Chip8 {
     sound_timer: u8,
     pub display: [bool; 64 * 32],
     keypad: [bool; 16],
-    opcode: u16,
 }
 
 const START_ADDR: usize = 0x200;
@@ -50,7 +49,6 @@ impl Chip8 {
             sound_timer: 0,
             display: [false; 64 * 32],
             keypad: [false; 16],
-            opcode: 0,
         };
 
         chip8.memory[FONT_START_ADDR..FONT_START_ADDR + FONT_SIZE].copy_from_slice(&FONTS);
@@ -92,6 +90,12 @@ impl Chip8 {
                 self.display.fill(false);
             }
 
+            // OOEE: Return from subroutine
+            (0x0, 0x0, 0xE, 0xE) => {
+                self.sp -= 1;
+                self.pc = self.stack[self.sp as usize];
+            }
+            
             // 1NNN: Jump
             (0x1, _, _, _) => {
                 self.pc = nnn;
@@ -103,11 +107,26 @@ impl Chip8 {
                 self.sp += 1;
                 self.pc = nnn;
             } 
-            
-            // OOEE: Return from subroutine
-            (0x0, 0x0, 0xE, 0xE) => {
-                self.sp -= 1;
-                self.pc = self.stack[self.sp as usize];
+           
+            // 3XNN: 
+            (0x3, _, _, _) => {
+                if self.v[x] == nn {
+                    self.pc += 2;
+                }
+            }
+
+            // 4XNN:
+            (0x4, _, _, _) => {
+                if self.v[x] != nn {
+                    self.pc += 2;
+                }
+            }
+
+            // 5XY0:
+            (0x5, _, _, 0x0) => {
+                if self.v[x] == self.v[y] {
+                    self.pc += 2;
+                }
             }
 
             // 6XNN: Set
@@ -120,6 +139,33 @@ impl Chip8 {
                 self.v[x] = self.v[x].wrapping_add(nn);
             }
 
+            // 8XY0:
+            (0x8, _, _, 0x0) => {
+                self.v[x] = self.v[y];
+            }
+
+            // 8XY1:
+            (0x8, _, _, 0x1) => {
+                self.v[x] |= self.v[y];
+            }
+
+            // 8XY2:
+            (0x8, _, _, 0x2) => {
+                self.v[x] &= self.v[y];
+            }
+
+            // 8XY3: 
+            (0x8, _, _, 0x3) => {
+                self.v[x] ^= self.v[y];
+            }
+
+            // 8XY4: 
+            (0x8, _, _, 0x4) => {
+                let (sum, carry) = self.v[x].overflowing_add(self.v[y]);
+                self.v[x] = sum;
+                self.v[0xF] = carry as u8;
+            }
+            
             // ANNN: Set index
             (0xA, _, _, _) => {
                 self.i = nnn;
