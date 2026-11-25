@@ -162,8 +162,8 @@ impl Chip8 {
             // 8XY4:
             (0x8, _, _, 0x4) => {
                 let (sum, carry) = self.v[x].overflowing_add(self.v[y]);
-                self.v[x] = sum;
                 self.v[0xF] = carry as u8;
+                self.v[x] = sum;
             }
 
             // 8XY5:
@@ -183,6 +183,20 @@ impl Chip8 {
                 // }
                 self.v[0xF] = lsb;
                 self.v[x] >>= 1;
+            }
+
+            // 8XY7:
+            (0x8, _, _, 0x7) => {
+                let (diff, borrow) = self.v[y].overflowing_sub(self.v[x]);
+                self.v[0xF] = u8::from(!borrow);
+                self.v[x] = diff;
+            }
+
+            // 8XYE:
+            (0x8, _, _, 0xE) => {
+                let msb = self.v[x] >> 7;
+                self.v[0xF] = msb;
+                self.v[x] <<= 1;
             }
 
             // ANNN: Set index
