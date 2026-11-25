@@ -1,4 +1,5 @@
 use std::{fs, io, path::Path};
+use rand::{Rng, RngExt};
 
 pub struct Chip8 {
     memory: [u8; 4096],
@@ -199,9 +200,26 @@ impl Chip8 {
                 self.v[x] <<= 1;
             }
 
+            // 9XY0:
+            (0x9, _, _, 0x0) => {
+                if self.v[x] != self.v[y] {
+                    self.pc += 2;
+                }
+            }
+
             // ANNN: Set index
             (0xA, _, _, _) => {
                 self.i = nnn;
+            }
+
+            // BNNN:
+            (0xB, _, _, _) => {
+                self.pc = nnn + (self.v[0x0] as u16);
+            }
+
+            // CXNN:
+            (0xC, _, _, _) => {
+                self.v[x] = rand::rng().random::<u8>() & nn;
             }
 
             // DXYN: Display
@@ -234,6 +252,12 @@ impl Chip8 {
                     }
                 }
             }
+
+            // FX1E:
+            (0xF, _, 0x1, 0xE) => {
+                self.i = self.i + self.v[x] as u16;
+            }
+            
             _ => todo!("Unimplemented opcode: {}", opcode),
         }
     }
