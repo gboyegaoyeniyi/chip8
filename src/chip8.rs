@@ -95,7 +95,7 @@ impl Chip8 {
                 self.sp -= 1;
                 self.pc = self.stack[self.sp as usize];
             }
-            
+
             // 1NNN: Jump
             (0x1, _, _, _) => {
                 self.pc = nnn;
@@ -106,9 +106,9 @@ impl Chip8 {
                 self.stack[self.sp as usize] = self.pc;
                 self.sp += 1;
                 self.pc = nnn;
-            } 
-           
-            // 3XNN: 
+            }
+
+            // 3XNN:
             (0x3, _, _, _) => {
                 if self.v[x] == nn {
                     self.pc += 2;
@@ -154,18 +154,37 @@ impl Chip8 {
                 self.v[x] &= self.v[y];
             }
 
-            // 8XY3: 
+            // 8XY3:
             (0x8, _, _, 0x3) => {
                 self.v[x] ^= self.v[y];
             }
 
-            // 8XY4: 
+            // 8XY4:
             (0x8, _, _, 0x4) => {
                 let (sum, carry) = self.v[x].overflowing_add(self.v[y]);
                 self.v[x] = sum;
                 self.v[0xF] = carry as u8;
             }
-            
+
+            // 8XY5:
+            (0x8, _, _, 0x5) => {
+                let (diff, borrow) = self.v[x].overflowing_sub(self.v[y]);
+                self.v[0xF] = u8::from(!borrow);
+                self.v[x] = diff;
+            }
+
+            // 8XY6:
+            (0x8, _, _, 0x6) => {
+                let lsb = self.v[x] & 0x1;
+                // if lsb == 1 {
+                //     self.v[x] = 1;
+                // } else {
+                //     self.v[x] = 0;
+                // }
+                self.v[0xF] = lsb;
+                self.v[x] >>= 1;
+            }
+
             // ANNN: Set index
             (0xA, _, _, _) => {
                 self.i = nnn;
