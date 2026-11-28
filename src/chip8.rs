@@ -271,7 +271,7 @@ impl Chip8 {
             
             // FX1E:
             (0xF, _, 0x1, 0xE) => {
-                self.i = self.i + self.v[x] as u16;
+                self.i = self.i.wrapping_add(self.v[x] as u16);
             }
             
             _ => todo!("Unimplemented opcode: {}", opcode),
