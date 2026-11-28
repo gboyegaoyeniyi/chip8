@@ -1,5 +1,5 @@
-use std::{fs, io, path::Path};
 use rand::{Rng, RngExt};
+use std::{fs, io, path::Path};
 
 pub struct Chip8 {
     memory: [u8; 4096],
@@ -253,7 +253,7 @@ impl Chip8 {
                 }
             }
 
-            // EX9E: 
+            // EX9E:
             (0xE, _, 0x9, 0xE) => {
                 let key = (self.v[x] & 0x0F) as usize;
                 if self.keypad[key] {
@@ -268,12 +268,53 @@ impl Chip8 {
                     self.pc += 2;
                 }
             }
-            
+
+            // FX07: Set Vx to the delay timer value
+            (0xF, _, 0x0, 0x7) => {
+                self.v[x] = self.delay_timer;
+            }
+
+            // FX0A: Store value of pressed key in Vx
+            (0xF, _, 0x0, 0xA) => {
+                if let Some(key) = self.keypad.iter().position(|&pressed| pressed) {
+                    self.v[x] = key as u8;
+                } else {
+                    self.pc -= 2;
+                }
+            }
+
+            // FX15: Set the delay_timer to the value of Vx
+            (0xF, _, 0x1, 0x5) => {
+                self.delay_timer = self.v[x];
+            }
+
+            // FX18: Set the sound_timer to the value of Vx
+            (0xF, _, 0x1, 0x8) => {
+                self.sound_timer = self.v[x];
+            }
+
             // FX1E:
             (0xF, _, 0x1, 0xE) => {
                 self.i = self.i.wrapping_add(self.v[x] as u16);
             }
-            
+
+            // FX29: Set I to the start address of digit at Vx in of the built in font sets
+            (0xF, _, 0x2, 0x9) => {
+                let digit = (self.v[x] & 0x0F) as u16;
+                self.i = (FONT_START_ADDR as u16) + (digit * 5); // mutipying by 5 giving each font sprite is 5  byte long
+            }
+
+            // FX33: Stores BCD from Vx to memory location at I, I+1, I+2
+            (0xF, _, 0x3, 0x3) => {
+                let value = self.v[x];
+                let i = self.i as usize;
+
+                self.memory[i] = value / 100;
+                self.memory[i + 1] = (value / 10) % 10;
+                self.memory[i + 2] = value % 10
+            }
+
+             
             _ => todo!("Unimplemented opcode: {}", opcode),
         }
     }
