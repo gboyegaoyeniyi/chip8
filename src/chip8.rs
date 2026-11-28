@@ -11,7 +11,7 @@ pub struct Chip8 {
     delay_timer: u8,
     sound_timer: u8,
     pub display: [bool; 64 * 32],
-    keypad: [bool; 16],
+    pub keypad: [bool; 16],
 }
 
 const START_ADDR: usize = 0x200;
@@ -214,7 +214,7 @@ impl Chip8 {
 
             // BNNN:
             (0xB, _, _, _) => {
-                self.pc = nnn + (self.v[0x0] as u16);
+                self.pc = nnn.wrapping_add(self.v[0x0] as u16);
             }
 
             // CXNN:
