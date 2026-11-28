@@ -253,6 +253,22 @@ impl Chip8 {
                 }
             }
 
+            // EX9E: 
+            (0xE, _, 0x9, 0xE) => {
+                let key = (self.v[x] & 0x0F) as usize;
+                if self.keypad[key] {
+                    self.pc += 2;
+                }
+            }
+
+            // EXA1:
+            (0xE, _, 0xA, 0x1) => {
+                let key = (self.v[x] & 0x0F) as usize;
+                if !self.keypad[key] {
+                    self.pc += 2;
+                }
+            }
+            
             // FX1E:
             (0xF, _, 0x1, 0xE) => {
                 self.i = self.i + self.v[x] as u16;
