@@ -314,6 +314,19 @@ impl Chip8 {
                 self.memory[i + 2] = value % 10
             }
 
+            // FX55: Stores register from 0 through x to i through x
+            (0xF, _, 0x5, 0x5) => {
+                let i = self.i as usize;
+                
+                self.memory[i..=i+x].copy_from_slice(&self.v[0..=x]);
+            }
+
+            // FX65: Fills register 0 through x with memory i through x 
+            (0xF, _, 0x6, 0x5) => {
+                let i = self.i as usize;
+                
+                self.v[0..=x].copy_from_slice(&self.memory[i..=i+x]);
+            }
              
             _ => todo!("Unimplemented opcode: {}", opcode),
         }
